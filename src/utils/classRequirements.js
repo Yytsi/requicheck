@@ -33,7 +33,9 @@ async function populateExaltValues() {
 
   exaltedValuesPromise = new Promise(async (resolve, reject) => {
     try {
-      let response = await fetch('/data/lh_exa_sets.txt')
+      let response = await fetch(
+        `${import.meta.env.BASE_URL}data/lh_exa_sets.txt`
+      )
       let text = await response.text()
       let lines = text.split('\n')
       for (let line of lines) {
@@ -43,7 +45,7 @@ async function populateExaltValues() {
         }
       }
 
-      response = await fetch('/data/banned.txt')
+      response = await fetch(`${import.meta.env.BASE_URL}data/banned.txt`)
       text = await response.text()
       lines = text.split('\n')
       for (let line of lines) {
@@ -53,7 +55,7 @@ async function populateExaltValues() {
         }
       }
 
-      response = await fetch('/data/t11_items.txt')
+      response = await fetch(`${import.meta.env.BASE_URL}data/t11_items.txt`)
       text = await response.text()
       lines = text.split('\n')
       for (let line of lines) {
@@ -65,7 +67,9 @@ async function populateExaltValues() {
 
       let idx = 0
       for (let num of [5, 3, 2, 1]) {
-        response = await fetch(`/data/points_items${num}.txt`)
+        response = await fetch(
+          `${import.meta.env.BASE_URL}data/points_items${num}.txt`
+        )
         text = await response.text()
         lines = text.split('\n')
 

@@ -162,7 +162,7 @@ function App() {
   }, [selectedWeapon, selectedAbility, selectedArmor, selectedRing])
 
   useEffect(() => {
-    fetch('/equipment_with_classes.txt')
+    fetch(`${import.meta.env.BASE_URL}equipment_with_classes.txt`)
       .then((response) => response.text())
       .then((text) => {
         const lines = text.split('\n')

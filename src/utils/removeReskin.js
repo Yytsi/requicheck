@@ -1,6 +1,6 @@
 const reskinMap = new Map()
 
-fetch('/reskins.txt')
+fetch(`${import.meta.env.BASE_URL}reskins.txt`)
   .then((response) => response.text())
   .then((text) => {
     const lines = text.split('\n')
