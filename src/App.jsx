@@ -456,7 +456,7 @@ function App() {
               src={
                 selectedWeapon
                   ? selectedWeapon.imageLocalPath
-                  : '/gifs/weapon.gif'
+                  : `${import.meta.env.BASE_URL}gifs/weapon.gif`
               }
               alt="First"
             />
@@ -466,7 +466,7 @@ function App() {
               src={
                 selectedAbility
                   ? selectedAbility.imageLocalPath
-                  : '/gifs/ability.gif'
+                  : `${import.meta.env.BASE_URL}gifs/ability.gif`
               }
               alt="Second"
             />
@@ -474,14 +474,20 @@ function App() {
           <Grid item>
             <img
               src={
-                selectedArmor ? selectedArmor.imageLocalPath : '/gifs/armor.gif'
+                selectedArmor
+                  ? selectedArmor.imageLocalPath
+                  : `${import.meta.env.BASE_URL}/gifs/armor.gif`
               }
               alt="Third"
             />
           </Grid>
           <Grid item>
             <img
-              src={selectedRing ? selectedRing.imageLocalPath : 'ring.png'}
+              src={
+                selectedRing
+                  ? selectedRing.imageLocalPath
+                  : `${import.meta.env.BASE_URL}ring.png`
+              }
               alt="Fourth"
             />
           </Grid>
