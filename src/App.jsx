@@ -476,7 +476,7 @@ function App() {
               src={
                 selectedArmor
                   ? selectedArmor.imageLocalPath
-                  : `${import.meta.env.BASE_URL}/gifs/armor.gif`
+                  : `${import.meta.env.BASE_URL}gifs/armor.gif`
               }
               alt="Third"
             />
