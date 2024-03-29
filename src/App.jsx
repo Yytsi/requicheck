@@ -359,7 +359,10 @@ function App() {
 
       {/* Tab 1 Content (Empty for now) */}
       <CustomTabPanel value={tabValue} index={0}>
-        {/* Future content goes here */}
+        <p>
+          This tab is currently under construction. Please use the "Custom
+          Selection" for now :)
+        </p>
       </CustomTabPanel>
 
       {/* Tab 2 Content */}
@@ -418,7 +421,7 @@ function App() {
                   : `${import.meta.env.BASE_URL}gifs/weapon.gif`
               }
               alt="Selected Weapon"
-              style={{ width: 100, height: 100 }} // Adjust size as needed
+              style={{ width: 80, height: 80 }} // Adjust size as needed
             />
           </Grid>
           <Grid item>
@@ -429,7 +432,7 @@ function App() {
                   : `${import.meta.env.BASE_URL}gifs/ability.gif`
               }
               alt="Selected Ability"
-              style={{ width: 100, height: 100 }} // Adjust size as needed
+              style={{ width: 80, height: 80 }} // Adjust size as needed
             />
           </Grid>
           <Grid item>
@@ -440,7 +443,7 @@ function App() {
                   : `${import.meta.env.BASE_URL}gifs/armor.gif`
               }
               alt="Selected Armor"
-              style={{ width: 100, height: 100 }} // Adjust size as needed
+              style={{ width: 80, height: 80 }} // Adjust size as needed
             />
           </Grid>
           <Grid item>
@@ -451,7 +454,7 @@ function App() {
                   : `${import.meta.env.BASE_URL}ring.png`
               }
               alt="Selected Ring"
-              style={{ width: 100, height: 100 }} // Adjust size as needed
+              style={{ width: 80, height: 80 }} // Adjust size as needed
             />
           </Grid>
         </Grid>
