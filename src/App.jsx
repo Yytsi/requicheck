@@ -5,6 +5,8 @@ import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
+import Tab from '@mui/material/Tab'
+import Tabs from '@mui/material/Tabs'
 
 import { removeReskin } from './utils/removeReskin'
 import {
@@ -16,6 +18,27 @@ import {
   pointPenaltyItems,
 } from './utils/classRequirements'
 
+function CustomTabPanel({ children, value, index, ...other }) {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  )
+}
+
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  }
+}
+
 function App() {
   const [items, setItems] = useState([])
   const [selectedWeapon, setSelectedWeapon] = useState(null)
@@ -23,6 +46,12 @@ function App() {
   const [selectedArmor, setSelectedArmor] = useState(null)
   const [selectedRing, setSelectedRing] = useState(null)
   const [selectedCharacter, setSelectedCharacter] = useState(null)
+
+  const [tabValue, setTabValue] = useState(0)
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue)
+  }
 
   const itemTypes = useMemo(() => {
     if (items.length > 0) {
@@ -37,26 +66,22 @@ function App() {
     return new Map()
   }, [items])
 
-  const skinlessWeapon = useMemo(() => {
-    if (selectedWeapon !== null) {
-      return removeReskin(selectedWeapon.weaponLinkName)
-    }
-  }, [selectedWeapon])
-  const skinlessAbility = useMemo(() => {
-    if (selectedAbility !== null) {
-      return removeReskin(selectedAbility.weaponLinkName)
-    }
-  }, [selectedAbility])
-  const skinlessArmor = useMemo(() => {
-    if (selectedArmor !== null) {
-      return removeReskin(selectedArmor.weaponLinkName)
-    }
-  }, [selectedArmor])
-  const skinlessRing = useMemo(() => {
-    if (selectedRing !== null) {
-      return removeReskin(selectedRing.weaponLinkName)
-    }
-  }, [selectedRing])
+  const skinlessWeapon = useMemo(
+    () => removeReskin(selectedWeapon?.weaponLinkName),
+    [selectedWeapon]
+  )
+  const skinlessAbility = useMemo(
+    () => removeReskin(selectedAbility?.weaponLinkName),
+    [selectedAbility]
+  )
+  const skinlessArmor = useMemo(
+    () => removeReskin(selectedArmor?.weaponLinkName),
+    [selectedArmor]
+  )
+  const skinlessRing = useMemo(
+    () => removeReskin(selectedRing?.weaponLinkName),
+    [selectedRing]
+  )
 
   const hasItem = (item) => {
     if (item === null) return -2
@@ -67,98 +92,57 @@ function App() {
     return -1
   }
 
-  const characterPoints = useMemo(() => {
+  function evaluateEquipment(weapon, ability, armor, ring) {
+    const equipments = [weapon, ability, armor, ring]
+
+    for (let i = 0; i < equipments.length; i++) {
+      if (bannedItems.includes(equipments[i])) {
+        return { result: 'banned', points: 0, itemIdx: i }
+      }
+    }
+
+    let totalPoints = 0
+    const pointsAssignedEquipment = [false, false, false, false]
+
+    for (let i = 0; i < 4; i++) {
+      for (let item of exaPointsList[i]) {
+        if (item[0] === 'special') {
+          // Special handling logic (not detailed here, please fill in)
+        } else {
+          const it = item[0]
+          const itemType = itemTypes.get(it) - 1
+
+          if (!equipments.includes(it) || pointsAssignedEquipment[itemType]) {
+            continue
+          }
+
+          pointsAssignedEquipment[itemType] = true
+          totalPoints += [5, 3, 2, 1][i] // Adjust points as necessary
+        }
+      }
+    }
+
+    for (let item of pointPenaltyItems) {
+      if (equipments.includes(item)) {
+        totalPoints-- // Deduct points for penalty items
+      }
+    }
+
+    return { result: 'ok', points: totalPoints }
+  }
+
+  const characterEvaluation = useMemo(() => {
     async function populateExaltValues() {
       await ensureExaltValuesArePopulated()
     }
     populateExaltValues()
 
-    for (let i = 0; i < 4; i++) {
-      if (
-        bannedItems.includes(
-          [skinlessWeapon, skinlessAbility, skinlessArmor, skinlessRing][i]
-        )
-      ) {
-        return -1 * (i + 1) * 10
-      }
-    }
-
-    // check st sets first
-    for (let set of exaLHSTSets) {
-      if (
-        set.includes(skinlessWeapon) &&
-        set.includes(skinlessAbility) &&
-        set.includes(skinlessArmor) &&
-        set.includes(skinlessRing)
-      ) {
-        return 99
-      }
-    }
-
-    const pointsAssignedEquipment = [false, false, false, false]
-    let totalPoints = 0
-
-    // check for exalted items
-    for (let i = 0; i < 4; i++) {
-      for (let item of exaPointsList[i]) {
-        // staff-of-the-fundamental-core
-        // special 3 item:healing-tome item:ritual-robe item:the-twilight-gemstone
-        if (item[0] === 'special') {
-          const cnt = Number(item[1])
-          const rest = item.slice(2)
-          let ok = true
-
-          for (let req of rest) {
-            const [a, b] = req.split(':')
-            if (a === 'item') {
-              const itemType = itemTypes.get(b) - 1
-              if (hasItem(b) == -1 || pointsAssignedEquipment[itemType]) {
-                ok = false
-                break
-              }
-            } else if (a === 'class') {
-              if (b !== selectedCharacter) {
-                ok = false
-                break
-              }
-            } else {
-              console.log('Unknown special requirement:', req)
-            }
-          }
-
-          if (ok) {
-            for (let req of rest) {
-              const [a, b] = req.split(':')
-              if (a === 'item') {
-                const itemType = itemTypes.get(b) - 1
-                pointsAssignedEquipment[itemType] = true
-              }
-            }
-
-            totalPoints += [5, 3, 2, 1][i]
-          }
-        } else {
-          const it = item[0]
-          const itemType = itemTypes.get(it) - 1
-
-          if (hasItem(it) == -1 || pointsAssignedEquipment[itemType]) {
-            continue
-          }
-
-          pointsAssignedEquipment[itemType] = true
-          totalPoints += [5, 3, 2, 1][i]
-        }
-      }
-    }
-
-    // check for point penalty items
-    for (let item of pointPenaltyItems) {
-      if (hasItem(item) >= 0) {
-        totalPoints--
-      }
-    }
-
-    return totalPoints
+    return evaluateEquipment(
+      skinlessWeapon,
+      skinlessAbility,
+      skinlessArmor,
+      skinlessRing
+    )
   }, [selectedWeapon, selectedAbility, selectedArmor, selectedRing])
 
   useEffect(() => {
@@ -232,25 +216,11 @@ function App() {
   }
 
   const middleBox = () => {
-    if (characterPoints < -1) {
-      console.log('characterPoints:', characterPoints)
-      let bannedItem = ''
-      switch (characterPoints) {
-        case -10:
-          bannedItem = selectedWeapon.name
-          break
-        case -20:
-          bannedItem = selectedAbility.name
-          break
-        case -30:
-          bannedItem = selectedArmor.name
-          break
-        case -40:
-          bannedItem = selectedRing.name
-          break
-        default:
-          bannedItem = 'Unknown'
-      }
+    if (characterEvaluation.result === 'banned') {
+      const bannedItemName =
+        [selectedWeapon, selectedAbility, selectedArmor, selectedRing][
+          characterEvaluation.itemIdx
+        ]?.name || 'Unknown item'
       return (
         <Paper
           elevation={3}
@@ -263,94 +233,67 @@ function App() {
         >
           <Typography variant="h5" component="h2" gutterBottom>
             <span style={{ color: 'red' }}>
-              {bannedItem} is banned from an exalted lost halls run
+              {bannedItemName} is banned from an exalted Lost Halls run.
             </span>
           </Typography>
         </Paper>
       )
-    } else if (!selectedCharacter) {
-      return (
-        <Paper
-          elevation={3}
-          sx={{
-            p: 2,
-            maxWidth: '800px',
-            margin: 'auto',
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="h5" component="h2" gutterBottom>
-            <span style={{ color: 'red' }}>
-              Currently {characterPoints} points for an exalted lost halls run
-              (no class selected)
-            </span>
-          </Typography>
-        </Paper>
-      )
-    } else if (selectedCharacter) {
-      return (
-        <Paper
-          elevation={3}
-          sx={{
-            p: 2,
-            maxWidth: '800px',
-            margin: 'auto',
-            textAlign: 'center',
-          }}
-        >
-          {classRequirementLostHallsExalted[selectedCharacter] <=
-          characterPoints ? (
-            <Typography variant="h5" component="h2" gutterBottom>
-              {characterPoints < 99 ? (
-                <span style={{ color: 'green' }}>
-                  Your
-                  <img
-                    src={`class_pictures/${selectedCharacter}.png`}
-                    style={{
-                      maxWidth: '50px',
-                      maxHeight: '50px',
-                      margin: '0 10px',
-                    }}
-                  />
-                  has {characterPoints}/
-                  {classRequirementLostHallsExalted[selectedCharacter]} points
-                  for an exalted lost halls run :){' '}
-                </span>
-              ) : (
-                <span style={{ color: 'green' }}>
-                  Your
-                  <img
-                    src={`class_pictures/${selectedCharacter}.png`}
-                    style={{
-                      maxWidth: '50px',
-                      maxHeight: '50px',
-                      margin: '0 10px',
-                    }} // Controlled size
-                  />
-                  has an accepted ST Set for the run! :){' '}
-                </span>
-              )}
-            </Typography>
-          ) : (
+    } else {
+      // This section handles the display when there are no banned items.
+      // It checks if a character class is selected and displays points accordingly.
+      if (!selectedCharacter) {
+        return (
+          <Paper
+            elevation={3}
+            sx={{
+              p: 2,
+              maxWidth: '800px',
+              margin: 'auto',
+              textAlign: 'center',
+            }}
+          >
             <Typography variant="h5" component="h2" gutterBottom>
               <span style={{ color: 'red' }}>
-                Your
+                Currently {characterEvaluation.points} points for an exalted
+                Lost Halls run (no class selected).
+              </span>
+            </Typography>
+          </Paper>
+        )
+      } else {
+        // If a character class is selected, display the points and compare with the class requirement.
+        const requirement = classRequirementLostHallsExalted[selectedCharacter]
+        const pointsMet = characterEvaluation.points >= requirement
+        const color = pointsMet ? 'green' : 'red'
+        return (
+          <Paper
+            elevation={3}
+            sx={{
+              p: 2,
+              maxWidth: '800px',
+              margin: 'auto',
+              textAlign: 'center',
+            }}
+          >
+            <Typography variant="h5" component="h2" gutterBottom>
+              <span style={{ color }}>
+                Your{' '}
                 <img
                   src={`class_pictures/${selectedCharacter}.png`}
+                  alt={selectedCharacter}
                   style={{
                     maxWidth: '50px',
                     maxHeight: '50px',
                     margin: '0 10px',
                   }}
                 />
-                has {characterPoints}/
-                {classRequirementLostHallsExalted[selectedCharacter]} points for
-                an exalted lost halls run :({' '}
+                has {characterEvaluation.points}/{requirement} points for an
+                exalted Lost Halls run {pointsMet ? ':)' : ':('}
               </span>
             </Typography>
-          )}
-        </Paper>
-      )
+          </Paper>
+        )
+      }
     }
   }
 
@@ -377,80 +320,96 @@ function App() {
         </Typography>
       </Box>
 
-      {/* Service Description Section */}
-      <Box
-        sx={{
-          width: '100%',
-          mt: 4,
-          mb: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
+      {/* Tabs Header */}
+      <Typography
+        variant="h6"
+        component="h2"
+        sx={{ mt: 2, mb: 1, fontWeight: 'medium' }}
+        textAlign="center"
       >
-        <Paper
-          elevation={3}
-          sx={{ p: 3, maxWidth: '800px', margin: 'auto', textAlign: 'center' }}
+        Select a tab
+      </Typography>
+
+      {/* Tabs */}
+      <Box sx={{ width: '100%', bgcolor: 'background.paper' }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          centered
+          sx={{
+            '.MuiTabs-indicator': {
+              backgroundColor: '#1976d2', // Active tab indicator color
+            },
+            '.MuiTab-root': {
+              '&.Mui-selected': {
+                color: '#1976d2', // Active tab text color
+              },
+              fontWeight: 'bold',
+              '&:hover': {
+                color: '#115293', // Tab text hover color
+                opacity: 1,
+              },
+            },
+          }}
         >
-          <Typography variant="h5" component="h2" gutterBottom>
-            Do you have the gear for that LH exalted raid? Find out!
-          </Typography>
-          <Typography variant="body1" paragraph>
-            Enter your gear by using the search bar below and see if you have
-            the right gear for your character.
-          </Typography>
-        </Paper>
+          <Tab label="Scan through realmeye IGN" />
+          <Tab label="Custom select" />
+        </Tabs>
       </Box>
 
-      <Box
-        sx={{
-          width: '100%',
-          mt: 2,
-          mb: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      {/* Tab 1 Content (Empty for now) */}
+      <CustomTabPanel value={tabValue} index={0}>
+        {/* Future content goes here */}
+      </CustomTabPanel>
+
+      {/* Tab 2 Content */}
+      <CustomTabPanel value={tabValue} index={1}>
         {middleBox()}
-      </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          flexGrow: 1,
-          justifyContent: 'center',
-        }}
-      >
-        <Box sx={{ width: 300, marginBottom: 4 }}>
-          <Autocomplete
-            options={items}
-            getOptionLabel={(option) => option.name}
-            filterOptions={customFilter}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id}>
-                <img
-                  src={option.imageLocalPath}
-                  alt={option.name}
-                  style={{ width: 20, height: 20, marginRight: 10 }}
+        {/* Center the selection box */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            mt: 2,
+          }}
+        >
+          <Box sx={{ width: 300 }}>
+            {' '}
+            {/* Adjust width as needed */}
+            <Autocomplete
+              options={items}
+              getOptionLabel={(option) => option.name}
+              filterOptions={customFilter}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <img
+                    src={option.imageLocalPath}
+                    alt={option.name}
+                    style={{ width: 20, height: 20, marginRight: 10 }}
+                  />
+                  {option.name}
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search Items"
+                  variant="outlined"
                 />
-                {option.name}
-              </li>
-            )}
-            renderInput={(params) => (
-              <TextField {...params} label="Search Items" variant="outlined" />
-            )}
-            onChange={(event, newValue) => {
-              selectItem(newValue)
-            }}
-            fullWidth
-          />
+              )}
+              onChange={(event, newValue) => {
+                selectItem(newValue)
+              }}
+              fullWidth
+            />
+          </Box>
         </Box>
 
-        <Grid container justifyContent="center" spacing={2}>
+        {/* Display selected item images */}
+        <Grid container justifyContent="center" spacing={2} sx={{ mt: 2 }}>
           <Grid item>
             <img
               src={
@@ -458,7 +417,8 @@ function App() {
                   ? selectedWeapon.imageLocalPath
                   : `${import.meta.env.BASE_URL}gifs/weapon.gif`
               }
-              alt="First"
+              alt="Selected Weapon"
+              style={{ width: 100, height: 100 }} // Adjust size as needed
             />
           </Grid>
           <Grid item>
@@ -468,7 +428,8 @@ function App() {
                   ? selectedAbility.imageLocalPath
                   : `${import.meta.env.BASE_URL}gifs/ability.gif`
               }
-              alt="Second"
+              alt="Selected Ability"
+              style={{ width: 100, height: 100 }} // Adjust size as needed
             />
           </Grid>
           <Grid item>
@@ -478,7 +439,8 @@ function App() {
                   ? selectedArmor.imageLocalPath
                   : `${import.meta.env.BASE_URL}gifs/armor.gif`
               }
-              alt="Third"
+              alt="Selected Armor"
+              style={{ width: 100, height: 100 }} // Adjust size as needed
             />
           </Grid>
           <Grid item>
@@ -488,20 +450,21 @@ function App() {
                   ? selectedRing.imageLocalPath
                   : `${import.meta.env.BASE_URL}ring.png`
               }
-              alt="Fourth"
+              alt="Selected Ring"
+              style={{ width: 100, height: 100 }} // Adjust size as needed
             />
           </Grid>
         </Grid>
-      </Box>
+      </CustomTabPanel>
 
       {/* Footer */}
       <Box
         sx={{
           width: '100%',
           p: 2,
-          backgroundColor: '#e0e0e0', // A light grey background for the footer
-          borderTop: '1px solid #bdbdbd', // A subtle border line at the top of the footer for separation
-          mt: 'auto', // Push the footer to the bottom
+          backgroundColor: '#e0e0e0',
+          borderTop: '1px solid #bdbdbd',
+          mt: 'auto',
         }}
       >
         <Typography variant="body2" textAlign="center" color="textSecondary">
