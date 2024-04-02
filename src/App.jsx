@@ -173,7 +173,6 @@ function getCharacterStyle(
 import { List, ListItem, Divider } from '@mui/material'
 
 const calculateCharacterMessage = (character, characterResult) => {
-  console.log(character, characterResult)
   // calculate what text should be shown and what style (sx) should be applied
   if (character.playerStats !== '8/8') {
     return {
@@ -475,17 +474,29 @@ function App() {
       return { result: 'no class selected', points: totalPoints }
     }
 
-    const requirement = classRequirementLostHallsExalted[thisCharacterClass]
-
-    if (totalPoints < requirement) {
-      return {
-        result: 'insufficient points',
-        points: totalPoints,
-        required: requirement,
-      }
+    // check if it's a set
+    let ok = false
+    for (let set of exaLHSTSets) {
+      ok |= equipments.every(
+        (item) => item !== undefined && item !== null && set.includes(item)
+      )
     }
 
-    return { result: 'ok', points: totalPoints, required: requirement }
+    const requirement = classRequirementLostHallsExalted[thisCharacterClass]
+
+    if (!ok) {
+      if (totalPoints < requirement) {
+        return {
+          result: 'insufficient points',
+          points: totalPoints,
+          required: requirement,
+        }
+      }
+
+      return { result: 'ok', points: totalPoints, required: requirement }
+    } else {
+      return { result: 'ok', points: requirement, required: requirement }
+    }
   }
 
   useEffect(() => {
