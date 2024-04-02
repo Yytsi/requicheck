@@ -27,7 +27,7 @@ const pointPenaltyItems = []
 let exaltedValuesPromise = null
 
 async function populateExaltValues() {
-  if (exaltedValuesPromise) {
+  if (exaltedValuesPromise != null) {
     return exaltedValuesPromise
   }
 
@@ -82,9 +82,13 @@ async function populateExaltValues() {
 
         idx++
       }
+
+      resolve()
     } catch (error) {
       console.error('Error fetching or parsing the file:', error)
       reject(error)
+    } finally {
+      exaltedValuesPromise = null
     }
   })
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useCallback } from 'react'
 import Autocomplete from '@mui/material/Autocomplete'
 import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
@@ -7,6 +8,7 @@ import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
+import LoadingButton from '@mui/lab/LoadingButton'
 
 import { removeReskin } from './utils/removeReskin'
 import {
@@ -32,11 +34,292 @@ function CustomTabPanel({ children, value, index, ...other }) {
   )
 }
 
-function a11yProps(index) {
+const charsInfo = [
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/bow-of-mystical-energy',
+      'https://www.realmeye.com/wiki/cave-dweller-trap',
+      'https://www.realmeye.com/wiki/leviathan-armor',
+      'https://www.realmeye.com/wiki/ring-of-unbound-health',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/staff-of-the-vital-unity',
+      'https://www.realmeye.com/wiki/lifedrinker-skull',
+      'https://www.realmeye.com/wiki/robe-of-the-ancient-intellect',
+      'https://www.realmeye.com/wiki/ring-of-paramount-health',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/fury-flail',
+      'https://www.realmeye.com/wiki/golden-helm',
+      'https://www.realmeye.com/wiki/candy-coated-armor',
+      'https://www.realmeye.com/wiki/ring-of-paramount-health',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/rusty-katana',
+      'https://www.realmeye.com/wiki/slashing-sheath',
+    ],
+    playerStats: '0/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/fury-flail',
+      'https://www.realmeye.com/wiki/shield-of-orcish-regalia',
+      'https://www.realmeye.com/wiki/sage-s-wakibiki',
+      'https://www.realmeye.com/wiki/ring-of-decades',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/fury-flail',
+      'https://www.realmeye.com/wiki/seal-of-the-holy-warrior',
+      'https://www.realmeye.com/wiki/annihilation-armor',
+      'https://www.realmeye.com/wiki/ring-of-paramount-health',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/aspirant-s-staff',
+      'https://www.realmeye.com/wiki/genesis-spell',
+      'https://www.realmeye.com/wiki/aspirant-s-robes',
+      'https://www.realmeye.com/wiki/ring-of-the-stalwart',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/wand-of-evocation',
+      'https://www.realmeye.com/wiki/cnidaria-rod',
+      'https://www.realmeye.com/wiki/robe-of-the-ancient-intellect',
+      'https://www.realmeye.com/wiki/bloodshed-ring',
+    ],
+    playerStats: '8/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/kusanagi',
+      'https://www.realmeye.com/wiki/royal-wakizashi',
+      'https://www.realmeye.com/wiki/kamishimo',
+      'https://www.realmeye.com/wiki/thistleleaf-necklace',
+    ],
+    playerStats: '4/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/quartz-cutter',
+      'https://www.realmeye.com/wiki/star-of-enlightenment',
+      'https://www.realmeye.com/wiki/luminous-armor',
+      'https://www.realmeye.com/wiki/radiant-heart',
+    ],
+    playerStats: '5/8',
+  },
+  {
+    characterPicture: 'leviathan-armor',
+    items: [
+      'https://www.realmeye.com/wiki/steel-dagger',
+      'https://www.realmeye.com/wiki/daevite-progenitor',
+    ],
+    playerStats: '0/8',
+  },
+]
+
+const validIGN = (ign) => {
+  return /^[a-zA-Z0-9]{1,17}$/.test(ign)
+}
+
+const CHAR_WIDTH = 50 // Width of one character image in the sprite sheet
+const CHAR_HEIGHT = 50 // Height of one character image in the sprite sheet
+
+function getCharacterStyle(
+  base64Image,
+  index,
+  spriteWidth,
+  spriteHeight,
+  totalSprites
+) {
+  // Calculate the background position based on index
+  const xPosition = -(spriteWidth * index)
+
   return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+    width: `${spriteWidth}px`, // Width of one sprite
+    height: `${spriteHeight}px`, // Height of one sprite
+    backgroundImage: `url(${base64Image})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: `${xPosition}px 0px`,
+    backgroundSize: `${spriteWidth * totalSprites}px ${spriteHeight}px`, // Total width of all sprites, height of one sprite
   }
+}
+
+import { List, ListItem, Divider } from '@mui/material'
+
+const calculateCharacterMessage = (character, characterResult) => {
+  console.log(character, characterResult)
+  // calculate what text should be shown and what style (sx) should be applied
+  if (character.playerStats !== '8/8') {
+    return {
+      message: ' NOT 8/8',
+      sx: {
+        color: 'red',
+        // middle of up and down
+      },
+    }
+  } else if (characterResult.result === 'banned') {
+    // itemIdx
+    const bannedItemName =
+      character.items[characterResult.itemIdx]?.name || 'Unknown item'
+
+    return {
+      message: `${bannedItemName} is banned`,
+      sx: {
+        color: 'red',
+      },
+    }
+  } else if (characterResult.result === 'insufficient points') {
+    return {
+      message: `Insufficient points: ${characterResult.points ?? 0}/${
+        characterResult.required ?? 0
+      }`,
+      sx: {
+        color: 'red',
+      },
+    }
+  } else if (characterResult.result === 'no class selected') {
+    return {
+      message: 'No class selected',
+      sx: {
+        color: 'red',
+      },
+    }
+  } else if (characterResult.result === 'ok') {
+    return {
+      message: `OK (${characterResult.points}/${
+        characterResult.required ?? 0
+      })`,
+      sx: {
+        color: 'green',
+      },
+    }
+  }
+}
+
+function CustomScrollableList({
+  characters,
+  sx,
+  characterListResults,
+  characterImageSheet64,
+}) {
+  // form character messages
+  const characterMessages =
+    characterListResults.length !== 0
+      ? characters.map((character, index) =>
+          index < characterListResults.length
+            ? calculateCharacterMessage(character, characterListResults[index])
+            : { message: 'Unknown', sx: {} }
+        )
+      : []
+  return (
+    <Paper
+      sx={{
+        maxHeight: 400,
+        overflow: 'auto',
+        mt: 2,
+        width: '100%', // Use the full width of the parent container by default
+        minWidth: { sm: '80vw', md: '65vw', lg: '50vw' }, // Adjust the maximum width based on screen size
+        transition: 'min-width 0.2s ease-in-out',
+      }}
+    >
+      <List>
+        {characters.map((character, index) => (
+          <React.Fragment key={index}>
+            <ListItem alignItems="flex-start">
+              <Grid container spacing={2}>
+                <Grid item xs={2}>
+                  <Box
+                    sx={getCharacterStyle(
+                      'data:image/png;base64,' + characterImageSheet64,
+                      character.characterIndex,
+                      CHAR_WIDTH,
+                      CHAR_HEIGHT,
+                      characters.length
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={8}>
+                  <Grid container spacing={1}>
+                    {character.items.map((item, itemIndex) => (
+                      <Grid item key={itemIndex}>
+                        <a
+                          href={item}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          <Box
+                            component="img"
+                            sx={{ height: 40, width: 40 }}
+                            src={`downloaded_images/${
+                              item.match(/\/wiki\/(.*?)\/?$/)[1] ?? 'unknown'
+                            }.png`}
+                            alt={item}
+                          />
+                        </a>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Grid>
+                <Grid item xs={2}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '100%',
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      component="h2"
+                      align="center"
+                      sx={
+                        characterMessages.length !== 0
+                          ? characterMessages[index]?.sx ?? {}
+                          : {}
+                      }
+                    >
+                      {characterMessages.length !== 0 &&
+                        (characterMessages[index].message ?? 'Unknown')}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </ListItem>
+            {index < characters.length - 1 && (
+              <Divider component="li" sx={{ marginLeft: 0, width: '100%' }} />
+            )}
+          </React.Fragment>
+        ))}
+      </List>
+    </Paper>
+  )
 }
 
 function App() {
@@ -46,6 +329,13 @@ function App() {
   const [selectedArmor, setSelectedArmor] = useState(null)
   const [selectedRing, setSelectedRing] = useState(null)
   const [selectedCharacter, setSelectedCharacter] = useState(null)
+  const [characterList, setCharacterList] = useState([])
+  const [exaltDataLoaded, setExaltDataLoaded] = useState(false)
+  const [characterListResults, setCharacterListResults] = useState([])
+  const [characterImageSheet64, setCharacterImageSheet64] = useState(null)
+  const [realmEyeIGN, setRealmEyeIGN] = useState('')
+  const [fetchingData, setFetchingData] = useState(false)
+  const [itemToClassDict, setItemToClassDict] = useState({})
 
   const [tabValue, setTabValue] = useState(0)
 
@@ -92,10 +382,49 @@ function App() {
     return -1
   }
 
-  function evaluateEquipment(weapon, ability, armor, ring) {
-    const equipments = [weapon, ability, armor, ring]
+  const fetchCharacterData = useCallback(
+    async (realmEyeIGN) => {
+      if (fetchingData) {
+        return
+      }
+      if (!validIGN(realmEyeIGN)) {
+        alert('Invalid IGN. Please enter a valid IGN.')
+        return
+      }
 
+      setFetchingData(true)
+
+      fetch(
+        `http://localhost:3000/scrape?url=https://www.realmeye.com/player/${encodeURIComponent(
+          realmEyeIGN
+        )}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          // Process the fetched data here
+          setCharacterList(data.characterData)
+          setCharacterImageSheet64(data.base64ImageData)
+        })
+        .catch((error) => {
+          console.error('Error fetching data:', error)
+        })
+        .finally(() => {
+          setFetchingData(false)
+        })
+    },
+    [setCharacterList, setCharacterImageSheet64]
+  )
+
+  function evaluateEquipment(gearItemInputs) {
+    let equipments = [...gearItemInputs]
     for (let i = 0; i < equipments.length; i++) {
+      if (equipments[i] !== null && equipments[i] !== undefined) {
+        // CAUTION! Item names are translated from the wiki link to the actual item name
+        const matchResult = equipments[i].match(/\/wiki\/(.*?)\/?$/)
+        if (matchResult && matchResult.length > 1) {
+          equipments[i] = matchResult[1]
+        }
+      }
       if (bannedItems.includes(equipments[i])) {
         return { result: 'banned', points: 0, itemIdx: i }
       }
@@ -128,24 +457,72 @@ function App() {
       }
     }
 
-    return { result: 'ok', points: totalPoints }
+    let thisCharacterClass = null
+    for (let item of equipments) {
+      if (item) {
+        // ability
+        // check if itemToClassDict is not empty
+        if (
+          Object.keys(itemToClassDict).length !== 0 &&
+          itemToClassDict[item] != 'noclass'
+        ) {
+          thisCharacterClass = itemToClassDict[item]
+        }
+      }
+    }
+
+    if (!thisCharacterClass) {
+      return { result: 'no class selected', points: totalPoints }
+    }
+
+    const requirement = classRequirementLostHallsExalted[thisCharacterClass]
+
+    if (totalPoints < requirement) {
+      return {
+        result: 'insufficient points',
+        points: totalPoints,
+        required: requirement,
+      }
+    }
+
+    return { result: 'ok', points: totalPoints, required: requirement }
   }
 
-  const characterEvaluation = useMemo(() => {
-    async function populateExaltValues() {
+  useEffect(() => {
+    async function fetchData() {
       await ensureExaltValuesArePopulated()
+      // setCharacterList(charsInfo)
+      setExaltDataLoaded(true)
     }
-    populateExaltValues()
+    fetchData()
+  }, [])
 
-    return evaluateEquipment(
+  useEffect(() => {
+    if (exaltDataLoaded && characterList.length > 0) {
+      setCharacterListResults(
+        characterList.map((character) => evaluateEquipment(character.items))
+      )
+    }
+  }, [exaltDataLoaded, characterList])
+
+  const characterEvaluation = useMemo(() => {
+    return evaluateEquipment([
       skinlessWeapon,
       skinlessAbility,
       skinlessArmor,
-      skinlessRing
-    )
-  }, [selectedWeapon, selectedAbility, selectedArmor, selectedRing])
+      skinlessRing,
+    ])
+  }, [
+    selectedWeapon,
+    selectedAbility,
+    selectedArmor,
+    selectedRing,
+    exaltDataLoaded,
+  ])
 
   useEffect(() => {
+    // create a dictionary of key value pairs for items (iten -> class)
+    let itemClassDict = {}
     fetch(`${import.meta.env.BASE_URL}equipment_with_classes.txt`)
       .then((response) => response.text())
       .then((text) => {
@@ -158,6 +535,7 @@ function App() {
             if (parts.length === 5) {
               const [imgSrc, name, link, category, characterClass] = parts
               const imageName = link.replace('/wiki/', '') + '.png'
+              itemClassDict[imageName.replace('.png', '')] = characterClass
               const id = `${name}-${link}` // create a unique ID for each item
               acc.push({
                 id,
@@ -176,6 +554,7 @@ function App() {
           return acc
         }, [])
         setItems(parsedItems)
+        setItemToClassDict(itemClassDict)
       })
       .catch((error) =>
         console.error('Error fetching or parsing the file:', error)
@@ -191,7 +570,6 @@ function App() {
       case '2':
         setSelectedAbility(item)
         setSelectedCharacter(item.characterClass)
-        console.log(item.characterClass)
         break
       case '3':
         setSelectedArmor(item)
@@ -213,6 +591,17 @@ function App() {
     return options.filter((option) => {
       return words.every((word) => option.name.toLowerCase().includes(word))
     })
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault() // Prevent the default form submit action
+    if (fetchingData) return
+    try {
+      // Call your function to fetch data
+      fetchCharacterData(realmEyeIGN)
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    }
   }
 
   const middleBox = () => {
@@ -357,12 +746,45 @@ function App() {
         </Tabs>
       </Box>
 
-      {/* Tab 1 Content (Empty for now) */}
+      {/* TODO: Make tab 1 a form so searching happens by a click */}
+      {/* Tab 1 Content */}
       <CustomTabPanel value={tabValue} index={0}>
-        <p>
-          This tab is currently under construction. Please use the "Custom
-          Selection" for now :)
-        </p>
+        <form onSubmit={handleSubmit}>
+          <Grid
+            container
+            spacing={2}
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Grid item>
+              <TextField
+                label="Enter realmeye IGN"
+                variant="outlined"
+                sx={{ height: '3.5rem', width: '200px' }} // Set a specific width
+                value={realmEyeIGN}
+                onChange={(e) => setRealmEyeIGN(e.target.value)}
+                // You might also want to include a "name" attribute here for accessibility and form handling
+              />
+            </Grid>
+            <Grid item>
+              <LoadingButton
+                type="submit" // Make this button submit the form
+                variant="contained"
+                loading={fetchingData} // Adjust loading state as necessary
+                sx={{ height: '3.5rem', width: '200px' }} // Set a specific width
+              >
+                Scan characters
+              </LoadingButton>
+            </Grid>
+          </Grid>
+        </form>
+
+        {/* Ensure CustomScrollableList utilizes the sx prop internally for width control */}
+        <CustomScrollableList
+          characters={characterList}
+          characterListResults={characterListResults}
+          characterImageSheet64={characterImageSheet64}
+        />
       </CustomTabPanel>
 
       {/* Tab 2 Content */}
