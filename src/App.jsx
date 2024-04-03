@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
+
+// MUI component imports
 import Autocomplete from '@mui/material/Autocomplete'
 import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
@@ -9,7 +10,9 @@ import Paper from '@mui/material/Paper'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import LoadingButton from '@mui/lab/LoadingButton'
+import { List, ListItem, Divider } from '@mui/material'
 
+// Utility/function imports from project files
 import { removeReskin } from './utils/removeReskin'
 import {
   classRequirementLostHallsExalted,
@@ -169,8 +172,6 @@ function getCharacterStyle(
     backgroundSize: `${spriteWidth * totalSprites}px ${spriteHeight}px`, // Total width of all sprites, height of one sprite
   }
 }
-
-import { List, ListItem, Divider } from '@mui/material'
 
 const calculateCharacterMessage = (character, characterResult) => {
   // calculate what text should be shown and what style (sx) should be applied
