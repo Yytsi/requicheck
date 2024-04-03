@@ -23,19 +23,9 @@ import {
   pointPenaltyItems,
 } from './utils/classRequirements'
 
-function CustomTabPanel({ children, value, index, ...other }) {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  )
-}
+// Custom component imports
+import CustomTabPanel from './components/CustomTabPanel'
+import CustomScrollableList from './components/CustomScrollableList'
 
 const charsInfo = [
   {
@@ -220,106 +210,6 @@ const calculateCharacterMessage = (character, characterResult) => {
       },
     }
   }
-}
-
-function CustomScrollableList({
-  characters,
-  sx,
-  characterListResults,
-  characterImageSheet64,
-}) {
-  // form character messages
-  const characterMessages =
-    characterListResults.length !== 0
-      ? characters.map((character, index) =>
-          index < characterListResults.length
-            ? calculateCharacterMessage(character, characterListResults[index])
-            : { message: 'Unknown', sx: {} }
-        )
-      : []
-  return (
-    <Paper
-      sx={{
-        maxHeight: 400,
-        overflow: 'auto',
-        mt: 2,
-        width: '100%', // Use the full width of the parent container by default
-        minWidth: { sm: '80vw', md: '65vw', lg: '50vw' }, // Adjust the maximum width based on screen size
-        transition: 'min-width 0.2s ease-in-out',
-      }}
-    >
-      <List>
-        {characters.map((character, index) => (
-          <React.Fragment key={index}>
-            <ListItem alignItems="flex-start">
-              <Grid container spacing={2}>
-                <Grid item xs={2}>
-                  <Box
-                    sx={getCharacterStyle(
-                      'data:image/png;base64,' + characterImageSheet64,
-                      character.characterIndex,
-                      CHAR_WIDTH,
-                      CHAR_HEIGHT,
-                      characters.length
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={8}>
-                  <Grid container spacing={1}>
-                    {character.items.map((item, itemIndex) => (
-                      <Grid item key={itemIndex}>
-                        <a
-                          href={item}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                        >
-                          <Box
-                            component="img"
-                            sx={{ height: 40, width: 40 }}
-                            src={`downloaded_images/${
-                              item.match(/\/wiki\/(.*?)\/?$/)[1] ?? 'unknown'
-                            }.png`}
-                            alt={item}
-                          />
-                        </a>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </Grid>
-                <Grid item xs={2}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      height: '100%',
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      component="h2"
-                      align="center"
-                      sx={
-                        characterMessages.length !== 0
-                          ? characterMessages[index]?.sx ?? {}
-                          : {}
-                      }
-                    >
-                      {characterMessages.length !== 0 &&
-                        (characterMessages[index].message ?? 'Unknown')}
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </ListItem>
-            {index < characters.length - 1 && (
-              <Divider component="li" sx={{ marginLeft: 0, width: '100%' }} />
-            )}
-          </React.Fragment>
-        ))}
-      </List>
-    </Paper>
-  )
 }
 
 function App() {
@@ -796,6 +686,10 @@ function App() {
           characters={characterList}
           characterListResults={characterListResults}
           characterImageSheet64={characterImageSheet64}
+          getCharacterStyle={getCharacterStyle}
+          calculateCharacterMessage={calculateCharacterMessage}
+          CHAR_WIDTH={CHAR_WIDTH}
+          CHAR_HEIGHT={CHAR_HEIGHT}
         />
       </CustomTabPanel>
 
