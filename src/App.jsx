@@ -21,6 +21,9 @@ import {
   exaPointsList,
   bannedItems,
   pointPenaltyItems,
+  itemToClassDict,
+  allGearItems,
+  reskinMap,
 } from './utils/classRequirements'
 
 // Custom component imports
@@ -213,7 +216,6 @@ const calculateCharacterMessage = (character, characterResult) => {
 }
 
 function App() {
-  const [items, setItems] = useState([])
   const [selectedWeapon, setSelectedWeapon] = useState(null)
   const [selectedAbility, setSelectedAbility] = useState(null)
   const [selectedArmor, setSelectedArmor] = useState(null)
@@ -225,7 +227,6 @@ function App() {
   const [characterImageSheet64, setCharacterImageSheet64] = useState(null)
   const [realmEyeIGN, setRealmEyeIGN] = useState('')
   const [fetchingData, setFetchingData] = useState(false)
-  const [itemToClassDict, setItemToClassDict] = useState({})
 
   const [tabValue, setTabValue] = useState(0)
 
@@ -234,9 +235,9 @@ function App() {
   }
 
   const itemTypes = useMemo(() => {
-    if (items.length > 0) {
+    if (allGearItems.length > 0) {
       const itemTypeMap = new Map()
-      for (let item of items) {
+      for (let item of allGearItems) {
         if (item.category) {
           itemTypeMap.set(item.weaponLinkName, Number(item.category))
         }
@@ -244,7 +245,7 @@ function App() {
       return itemTypeMap
     }
     return new Map()
-  }, [items])
+  }, [allGearItems])
 
   const skinlessWeapon = useMemo(
     () => removeReskin(selectedWeapon?.weaponLinkName),
@@ -305,8 +306,11 @@ function App() {
     [setCharacterList, setCharacterImageSheet64]
   )
 
-  function evaluateEquipment(gearItemInputs) {
+  function evaluateEquipment(gearItemInputs, characterClass = null) {
+    // the items can be deskinned (remove reskin) and then compared
+    // because we return an index anyway if the item is banned
     let equipments = [...gearItemInputs]
+
     for (let i = 0; i < equipments.length; i++) {
       if (equipments[i] !== null && equipments[i] !== undefined) {
         // CAUTION! Item names are translated from the wiki link to the actual item name
@@ -315,10 +319,16 @@ function App() {
           equipments[i] = matchResult[1]
         }
       }
+      equipments[i] = removeReskin(equipments[i]) // deskin here!
+
       if (bannedItems.includes(equipments[i])) {
         return { result: 'banned', points: 0, itemIdx: i }
       }
     }
+
+    console.log(reskinMap)
+
+    console.log('gear and equipments:', gearItemInputs, equipments)
 
     let totalPoints = 0
     const pointsAssignedEquipment = [false, false, false, false]
@@ -326,10 +336,39 @@ function App() {
     for (let i = 0; i < 4; i++) {
       for (let item of exaPointsList[i]) {
         if (item[0] === 'special') {
-          // Special handling logic (not detailed here, please fill in)
+          // special 3 item:healing-tome item:ritual-robe item:the-twilight-gemstone
+          let count = Number(item[1])
+          let rest = item.slice(2)
+
+          for (let it of rest) {
+            const [a, b] = it.split(':')
+            if (a === 'class') {
+              if (b === characterClass) {
+                count--
+              }
+            } else {
+              if (equipments.includes(b)) {
+                count--
+              }
+            }
+          }
+
+          // found a combination, which yields multiple points
+          if (count === 0) {
+            // disable those item slots from being used again
+            for (let it of rest) {
+              const itemType = itemTypes.get(it) - 1
+              pointsAssignedEquipment[itemType] = true
+            }
+            totalPoints += [5, 3, 2, 1][i]
+          }
         } else {
           const it = item[0]
           const itemType = itemTypes.get(it) - 1
+
+          if (it === undefined) {
+            console.log('no!')
+          }
 
           if (!equipments.includes(it) || pointsAssignedEquipment[itemType]) {
             continue
@@ -343,6 +382,7 @@ function App() {
 
     for (let item of pointPenaltyItems) {
       if (equipments.includes(item)) {
+        console.log('penalty item:', item)
         totalPoints-- // Deduct points for penalty items
       }
     }
@@ -421,47 +461,6 @@ function App() {
     selectedRing,
     exaltDataLoaded,
   ])
-
-  useEffect(() => {
-    // create a dictionary of key value pairs for items (iten -> class)
-    let itemClassDict = {}
-    fetch(`${import.meta.env.BASE_URL}equipment_with_classes.txt`)
-      .then((response) => response.text())
-      .then((text) => {
-        const lines = text.split('\n')
-        const parsedItems = lines.reduce((acc, line) => {
-          const trimmedLine = line.trim()
-
-          if (trimmedLine) {
-            const parts = trimmedLine.split(' ^ ')
-            if (parts.length === 5) {
-              const [imgSrc, name, link, category, characterClass] = parts
-              const imageName = link.replace('/wiki/', '') + '.png'
-              itemClassDict[imageName.replace('.png', '')] = characterClass
-              const id = `${name}-${link}` // create a unique ID for each item
-              acc.push({
-                id,
-                imgSrc,
-                name,
-                imageLocalPath: `downloaded_images/${imageName}`,
-                weaponLinkName: imageName.replace('.png', ''),
-                category,
-                characterClass,
-                link,
-              })
-            } else {
-              console.warn('Skipping line due to incorrect format:', line)
-            }
-          }
-          return acc
-        }, [])
-        setItems(parsedItems)
-        setItemToClassDict(itemClassDict)
-      })
-      .catch((error) =>
-        console.error('Error fetching or parsing the file:', error)
-      )
-  }, [])
 
   const selectItem = (item) => {
     if (!item) return
@@ -710,7 +709,7 @@ function App() {
             {' '}
             {/* Adjust width as needed */}
             <Autocomplete
-              options={items}
+              options={allGearItems}
               getOptionLabel={(option) => option.name}
               filterOptions={customFilter}
               isOptionEqualToValue={(option, value) => option.id === value.id}

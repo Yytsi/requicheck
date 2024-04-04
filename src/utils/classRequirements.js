@@ -24,6 +24,9 @@ const exaLHSTSets = []
 const exaPointsList = [[], [], [], []] // 5, 3, 2, 1
 const bannedItems = []
 const pointPenaltyItems = []
+let allGearItems = []
+const itemToClassDict = {}
+const reskinMap = new Map()
 let exaltedValuesPromise = null
 
 async function populateExaltValues() {
@@ -83,6 +86,53 @@ async function populateExaltValues() {
         idx++
       }
 
+      response = await fetch(
+        `${import.meta.env.BASE_URL}equipment_with_classes.txt`
+      )
+      text = await response.text()
+      let itemClassDict = {}
+      lines = text.split('\n')
+      const parsedItems = lines.reduce((acc, line) => {
+        const trimmedLine = line.trim()
+
+        if (trimmedLine) {
+          const parts = trimmedLine.split(' ^ ')
+          if (parts.length === 5) {
+            const [imgSrc, name, link, category, characterClass] = parts
+            const imageName = link.replace('/wiki/', '') + '.png'
+            itemClassDict[imageName.replace('.png', '')] = characterClass
+            const id = `${name}-${link}` // create a unique ID for each item (caution: this may not be unique in all cases so remove duplicates if necessary)
+            acc.push({
+              id,
+              imgSrc,
+              name,
+              imageLocalPath: `downloaded_images/${imageName}`,
+              weaponLinkName: imageName.replace('.png', ''),
+              category,
+              characterClass,
+              link,
+            })
+          } else {
+            console.warn('Skipping line due to incorrect format:', line)
+          }
+        }
+        return acc
+      }, [])
+      allGearItems = parsedItems
+      Object.assign(itemToClassDict, itemClassDict)
+
+      response = await fetch(`${import.meta.env.BASE_URL}reskins.txt`)
+      text = await response.text()
+      lines = text.split('\n')
+
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+        if (trimmedLine) {
+          const [reskin, originalItem] = trimmedLine.split(' ^ ')
+          reskinMap.set(reskin, originalItem)
+        }
+      }
+
       resolve()
     } catch (error) {
       console.error('Error fetching or parsing the file:', error)
@@ -96,4 +146,12 @@ async function populateExaltValues() {
 }
 
 export const ensureExaltValuesArePopulated = populateExaltValues
-export { exaLHSTSets, exaPointsList, bannedItems, pointPenaltyItems }
+export {
+  exaLHSTSets,
+  exaPointsList,
+  bannedItems,
+  pointPenaltyItems,
+  allGearItems,
+  itemToClassDict,
+  reskinMap,
+}
