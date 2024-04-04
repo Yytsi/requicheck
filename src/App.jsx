@@ -13,7 +13,6 @@ import LoadingButton from '@mui/lab/LoadingButton'
 import { List, ListItem, Divider } from '@mui/material'
 
 // Utility/function imports from project files
-import { removeReskin } from './utils/removeReskin'
 import {
   classRequirementLostHallsExalted,
   ensureExaltValuesArePopulated, // due to async function
@@ -24,6 +23,7 @@ import {
   itemToClassDict,
   allGearItems,
   reskinMap,
+  removeReskin,
 } from './utils/classRequirements'
 
 // Custom component imports
@@ -326,9 +326,20 @@ function App() {
       }
     }
 
-    console.log(reskinMap)
+    console.log(characterClass)
+    const requirement = classRequirementLostHallsExalted[characterClass] ?? 99
 
-    console.log('gear and equipments:', gearItemInputs, equipments)
+    // check if it's a set
+    let ok = false
+    for (let set of exaLHSTSets) {
+      ok |= equipments.every(
+        (item) => item !== undefined && item !== null && set.includes(item)
+      )
+    }
+
+    if (ok) {
+      return { result: 'ok', points: requirement, required: requirement }
+    }
 
     let totalPoints = 0
     const pointsAssignedEquipment = [false, false, false, false]
@@ -357,9 +368,14 @@ function App() {
           if (count === 0) {
             // disable those item slots from being used again
             for (let it of rest) {
-              const itemType = itemTypes.get(it) - 1
-              pointsAssignedEquipment[itemType] = true
+              const [a, b] = it.split(':')
+              if (a === 'item') {
+                const itemType = itemTypes.get(b) - 1
+                pointsAssignedEquipment[itemType] = true
+                console.log('disabled item:', b, 'slot', itemType)
+              }
             }
+            console.log('special:', item, equipments)
             totalPoints += [5, 3, 2, 1][i]
           }
         } else {
@@ -375,6 +391,7 @@ function App() {
           }
 
           pointsAssignedEquipment[itemType] = true
+          console.log('points item:', it, 'slot', itemType)
           totalPoints += [5, 3, 2, 1][i] // Adjust points as necessary
         }
       }
@@ -387,33 +404,9 @@ function App() {
       }
     }
 
-    let thisCharacterClass = null
-    for (let item of equipments) {
-      if (item) {
-        // ability
-        // check if itemToClassDict is not empty
-        if (
-          Object.keys(itemToClassDict).length !== 0 &&
-          itemToClassDict[item] != 'noclass'
-        ) {
-          thisCharacterClass = itemToClassDict[item]
-        }
-      }
-    }
-
-    if (!thisCharacterClass) {
+    if (!characterClass) {
       return { result: 'no class selected', points: totalPoints }
     }
-
-    // check if it's a set
-    let ok = false
-    for (let set of exaLHSTSets) {
-      ok |= equipments.every(
-        (item) => item !== undefined && item !== null && set.includes(item)
-      )
-    }
-
-    const requirement = classRequirementLostHallsExalted[thisCharacterClass]
 
     if (!ok) {
       if (totalPoints < requirement) {
@@ -426,7 +419,7 @@ function App() {
 
       return { result: 'ok', points: totalPoints, required: requirement }
     } else {
-      return { result: 'ok', points: requirement, required: requirement }
+      return { result: 'ok', points: totalPoints, required: requirement }
     }
   }
 
@@ -442,24 +435,25 @@ function App() {
   useEffect(() => {
     if (exaltDataLoaded && characterList.length > 0) {
       setCharacterListResults(
-        characterList.map((character) => evaluateEquipment(character.items))
+        characterList.map((character) =>
+          evaluateEquipment(character.items, character.characterClass)
+        )
       )
     }
   }, [exaltDataLoaded, characterList])
 
   const characterEvaluation = useMemo(() => {
-    return evaluateEquipment([
-      skinlessWeapon,
-      skinlessAbility,
-      skinlessArmor,
-      skinlessRing,
-    ])
+    return evaluateEquipment(
+      [skinlessWeapon, skinlessAbility, skinlessArmor, skinlessRing],
+      selectedCharacter
+    )
   }, [
     selectedWeapon,
     selectedAbility,
     selectedArmor,
     selectedRing,
     exaltDataLoaded,
+    selectedCharacter,
   ])
 
   const selectItem = (item) => {

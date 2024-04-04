@@ -26,7 +26,7 @@ const bannedItems = []
 const pointPenaltyItems = []
 let allGearItems = []
 const itemToClassDict = {}
-const reskinMap = new Map()
+let reskinMap = new Map()
 let exaltedValuesPromise = null
 
 async function populateExaltValues() {
@@ -145,6 +145,10 @@ async function populateExaltValues() {
   return exaltedValuesPromise
 }
 
+const removeReskin = (item) => {
+  return reskinMap.get(item) || item
+}
+
 export const ensureExaltValuesArePopulated = populateExaltValues
 export {
   exaLHSTSets,
@@ -154,4 +158,5 @@ export {
   allGearItems,
   itemToClassDict,
   reskinMap,
+  removeReskin,
 }
