@@ -55,7 +55,6 @@ function getCharacterStyle(
 }
 
 const calculateCharacterMessage = (character, characterResult) => {
-  console.log(character, characterResult)
   // calculate what text should be shown and what style (sx) should be applied
   if (character.playerStats !== '8/8') {
     return {
