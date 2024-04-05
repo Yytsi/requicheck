@@ -1,6 +1,8 @@
 # Realm of the Mad God Raid Requirement Checker
 
-This tool is designed to help players of Realm of the Mad God (RotMG) calculate gear requirements for participating in Discord runs. It provides a convenient interface for selecting your character's equipment and automatically calculating if your setup meets the raid requirements.
+This tool is designed to help players of Realm of the Mad God (RotMG) calculate gear requirements for participating in Discord runs.
+
+It can check for each character based on IGN whether it has sufficient gear for an exalted lost halls server run (8/8 + other requirements) and a separate convenient interface for selecting your character's equipment and automatically calculating if your setup meets the raid requirements.
 
 ## Disclaimer
 
