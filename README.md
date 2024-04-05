@@ -21,7 +21,7 @@ If you're only concerned with the backend setup, refer to [here](https://github.
 2. **Set Environment Variables**
    In the root folder, create a `.env` file and include a necessary environment variable (if you want to fetch player's character data by IGN), for example:
    ```plaintext
-   REACT_APP_BACKEND_URL=http://localhost:3000
+   VITE_USER_FETCH_LOCATION=http://localhost:3000/get_player_data
    ```
    Adjust the URL based on your backend configuration, but by default it's that (port 3000).
 
