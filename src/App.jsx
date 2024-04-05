@@ -55,6 +55,7 @@ function getCharacterStyle(
 }
 
 const calculateCharacterMessage = (character, characterResult) => {
+  console.log(character, characterResult)
   // calculate what text should be shown and what style (sx) should be applied
   if (character.playerStats !== '8/8') {
     return {
@@ -66,11 +67,12 @@ const calculateCharacterMessage = (character, characterResult) => {
     }
   } else if (characterResult.result === 'banned') {
     // itemIdx
-    const bannedItemName =
-      character.items[characterResult.itemIdx]?.name || 'Unknown item'
+    const banItemNumber =
+      ['First', 'Second', 'Third', 'Fourth'][characterResult.itemIdx] ||
+      'Unknown'
 
     return {
-      message: `${bannedItemName} is banned`,
+      message: `${banItemNumber} item is banned`,
       sx: {
         color: 'red',
       },
@@ -550,6 +552,7 @@ function App() {
                 // You might also want to include a "name" attribute here for accessibility and form handling
               />
             </Grid>
+
             <Grid item>
               <LoadingButton
                 type="submit" // Make this button submit the form
