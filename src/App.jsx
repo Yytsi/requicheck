@@ -10,134 +10,22 @@ import Paper from '@mui/material/Paper'
 import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import LoadingButton from '@mui/lab/LoadingButton'
-import { List, ListItem, Divider } from '@mui/material'
 
 // Utility/function imports from project files
 import {
   classRequirementLostHallsExalted,
-  ensureExaltValuesArePopulated, // due to async function
+  ensureDataIsLoadedFromFiles, // due to async function
   exaLHSTSets,
   exaPointsList,
   bannedItems,
   pointPenaltyItems,
-  itemToClassDict,
   allGearItems,
-  reskinMap,
   removeReskin,
-} from './utils/classRequirements'
+} from './utils/dataFromFiles'
 
 // Custom component imports
 import CustomTabPanel from './components/CustomTabPanel'
 import CustomScrollableList from './components/CustomScrollableList'
-
-const charsInfo = [
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/bow-of-mystical-energy',
-      'https://www.realmeye.com/wiki/cave-dweller-trap',
-      'https://www.realmeye.com/wiki/leviathan-armor',
-      'https://www.realmeye.com/wiki/ring-of-unbound-health',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/staff-of-the-vital-unity',
-      'https://www.realmeye.com/wiki/lifedrinker-skull',
-      'https://www.realmeye.com/wiki/robe-of-the-ancient-intellect',
-      'https://www.realmeye.com/wiki/ring-of-paramount-health',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/fury-flail',
-      'https://www.realmeye.com/wiki/golden-helm',
-      'https://www.realmeye.com/wiki/candy-coated-armor',
-      'https://www.realmeye.com/wiki/ring-of-paramount-health',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/rusty-katana',
-      'https://www.realmeye.com/wiki/slashing-sheath',
-    ],
-    playerStats: '0/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/fury-flail',
-      'https://www.realmeye.com/wiki/shield-of-orcish-regalia',
-      'https://www.realmeye.com/wiki/sage-s-wakibiki',
-      'https://www.realmeye.com/wiki/ring-of-decades',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/fury-flail',
-      'https://www.realmeye.com/wiki/seal-of-the-holy-warrior',
-      'https://www.realmeye.com/wiki/annihilation-armor',
-      'https://www.realmeye.com/wiki/ring-of-paramount-health',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/aspirant-s-staff',
-      'https://www.realmeye.com/wiki/genesis-spell',
-      'https://www.realmeye.com/wiki/aspirant-s-robes',
-      'https://www.realmeye.com/wiki/ring-of-the-stalwart',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/wand-of-evocation',
-      'https://www.realmeye.com/wiki/cnidaria-rod',
-      'https://www.realmeye.com/wiki/robe-of-the-ancient-intellect',
-      'https://www.realmeye.com/wiki/bloodshed-ring',
-    ],
-    playerStats: '8/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/kusanagi',
-      'https://www.realmeye.com/wiki/royal-wakizashi',
-      'https://www.realmeye.com/wiki/kamishimo',
-      'https://www.realmeye.com/wiki/thistleleaf-necklace',
-    ],
-    playerStats: '4/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/quartz-cutter',
-      'https://www.realmeye.com/wiki/star-of-enlightenment',
-      'https://www.realmeye.com/wiki/luminous-armor',
-      'https://www.realmeye.com/wiki/radiant-heart',
-    ],
-    playerStats: '5/8',
-  },
-  {
-    characterPicture: 'leviathan-armor',
-    items: [
-      'https://www.realmeye.com/wiki/steel-dagger',
-      'https://www.realmeye.com/wiki/daevite-progenitor',
-    ],
-    playerStats: '0/8',
-  },
-]
 
 const validIGN = (ign) => {
   return /^[a-zA-Z0-9]{1,17}$/.test(ign)
@@ -286,7 +174,9 @@ function App() {
       setFetchingData(true)
 
       fetch(
-        `http://localhost:3000/scrape?url=https://www.realmeye.com/player/${encodeURIComponent(
+        `${
+          import.meta.env.VITE_USER_FETCH_LOCATION
+        }?url=https://www.realmeye.com/player/${encodeURIComponent(
           realmEyeIGN
         )}`
       )
@@ -326,7 +216,6 @@ function App() {
       }
     }
 
-    console.log(characterClass)
     const requirement = classRequirementLostHallsExalted[characterClass] ?? 99
 
     // check if it's a set
@@ -372,10 +261,8 @@ function App() {
               if (a === 'item') {
                 const itemType = itemTypes.get(b) - 1
                 pointsAssignedEquipment[itemType] = true
-                console.log('disabled item:', b, 'slot', itemType)
               }
             }
-            console.log('special:', item, equipments)
             totalPoints += [5, 3, 2, 1][i]
           }
         } else {
@@ -383,7 +270,7 @@ function App() {
           const itemType = itemTypes.get(it) - 1
 
           if (it === undefined) {
-            console.log('no!')
+            console.warn('an item is undefined in exaPointsList, weird!')
           }
 
           if (!equipments.includes(it) || pointsAssignedEquipment[itemType]) {
@@ -391,7 +278,6 @@ function App() {
           }
 
           pointsAssignedEquipment[itemType] = true
-          console.log('points item:', it, 'slot', itemType)
           totalPoints += [5, 3, 2, 1][i] // Adjust points as necessary
         }
       }
@@ -399,7 +285,6 @@ function App() {
 
     for (let item of pointPenaltyItems) {
       if (equipments.includes(item)) {
-        console.log('penalty item:', item)
         totalPoints-- // Deduct points for penalty items
       }
     }
@@ -425,7 +310,7 @@ function App() {
 
   useEffect(() => {
     async function fetchData() {
-      await ensureExaltValuesArePopulated()
+      await ensureDataIsLoadedFromFiles()
       // setCharacterList(charsInfo)
       setExaltDataLoaded(true)
     }
