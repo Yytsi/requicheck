@@ -152,14 +152,13 @@ function App() {
     [selectedRing]
   )
 
-  const hasItem = (item) => {
-    if (item === null) return -2
-    if (selectedWeapon && skinlessWeapon === item) return 0
-    if (selectedAbility && skinlessAbility === item) return 1
-    if (selectedArmor && skinlessArmor === item) return 2
-    if (selectedRing && skinlessRing === item) return 3
-    return -1
-  }
+  // fetch and save to IGN using localStorage if possible
+  useEffect(() => {
+    const savedIGN = localStorage.getItem('realmEyeIGN')
+    if (savedIGN) {
+      setRealmEyeIGN(savedIGN)
+    }
+  }, [])
 
   const fetchCharacterData = useCallback(
     async (realmEyeIGN) => {
@@ -542,7 +541,12 @@ function App() {
                 variant="outlined"
                 sx={{ height: '3.5rem', width: '200px' }} // Set a specific width
                 value={realmEyeIGN}
-                onChange={(e) => setRealmEyeIGN(e.target.value)}
+                onChange={(e) => {
+                  setRealmEyeIGN(e.target.value)
+
+                  // Save to localStorage
+                  localStorage.setItem('realmEyeIGN', e.target.value)
+                }}
                 // You might also want to include a "name" attribute here for accessibility and form handling
               />
             </Grid>
