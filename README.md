@@ -43,6 +43,9 @@ If you're only concerned with the backend setup, refer to [here](https://github.
    cd .. && npm run dev
    ```
 
+   Access the project locally at [http://localhost:5173/](http://localhost:5173/) when running with Vite.
+
+
 ## Automation Script
 
 For convenience, you can use the following script to automate the setup process. Save it as `setup.sh` and run it from the root folder:
